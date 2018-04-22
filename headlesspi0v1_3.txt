@@ -1,0 +1,97 @@
+### USB Ethernet
+
+note: find notes for install of Raspbian allowing ssh over usb
+
+### Wi-Fi
+
+## Prerequisites
+Computer with SD Card slot and superuser priviledges
+Raspbian Image File (.iso,.img,.zip, ...)
+Micro SD Card
+
+# Step 1: Extract the image file to SD Card
+use "lsblk" to find the device name, for example mmcblk0
+
+If .zip:
+unzip -p 2017-11-29-raspbian-stretch.zip | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
+
+If .img:
+dd bs=4M if=2017-11-29-raspbian-stretch.img of=/dev/sdX status=progress conv=fsync
+
+# Step 2: Remove SD Card from PC and insert it again.
+
+# Step 3: Edit /etc/network/interfaces in rootfs (mount point)
+Replace:
+allow-hotplug wlan0
+iface wlan0 inet manual
+    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+
+With:
+auto wlan0
+allow-hotplug wlan0
+iface wlan0 inet dhcp
+    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+
+(if a static IP is wanted, change it to:
+auto wlan0
+allow-hotplug wlan0
+iface wlan0 inet static
+    address 192.168.1.20 # IP for the Zero
+    netmask 255.255.255.0
+    gateway 192.168.1.1 # Your router IP
+    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+	
+	&&
+
+modify: etc/resolv.conf & add:
+"# Google's public DNS servers
+nameserver 8.8.8.8
+nameserver 8.8.4.4")
+
+Step 4: Setup Wi-Fi and passkey
+Edit & Append /etc/wpa_supplicant/wpa_supplicant.conf:
+network={
+  ssid="my network name"
+  psk="my network password"
+  proto=RSN
+  key_mgmt=WPA-PSK
+  pairwise=CCMP
+  auth_alg=OPEN
+}
+
+Step 5: Enable SSH
+Add "ssh" to boot (mount point) by using "touch ssh"
+
+Step 6:
+Turn on pi0 and wait around 1 minute
+ 
+Step 7: Find raspberry pi's IP address (if DHCP)
+sudo nmap -p22 -sV 192.168.0.0/24
+OR
+Connect to internet box to find local IP of pi0
+((Can normally be reached as raspberrypi.local))
+
+Step 8: Connect to pi0 using SSH
+username: pi
+password: raspberry
+
+Step 9: Change password for security reasons
+run "passwd" to change the default password (default=raspberry)
+
+Step 10: Configure raspberry pi
+"raspi-config"
+
+Step 11: Update pi0
+sudo apt-get update
+sudo apt-get upgrade
+
+Step 12:
+Boot up into multi-user mode (disable GUI on boot) sudo systemctl set-default multi-user.target.
+
+To disable HDMI edit /etc/rc.local and add the following line at the bottom above exit 0 line:
+
+/usr/bin/tvservice -o
+
+#####
+
+
